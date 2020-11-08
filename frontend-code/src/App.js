@@ -3,6 +3,7 @@ import React from 'react';
 import './App.css';
 import SurveyPage from './components/SurveyPage.js'
 
+// @ts-ignore
 import { gapi } from 'gapi-script';
 
 class App extends React.Component {
@@ -15,10 +16,10 @@ class App extends React.Component {
     this.DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
     this.SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
 
-    gapi.load(this.initClient);
+    gapi.load('client:auth2', this.initClient);
 
-    //Will check calendar every 5 min
-    setInterval(this.findBreaks, 5 * 60 * 1000);
+    //Will check calendar every 2 sec
+    setInterval(this.findBreaks, 2 * 1000);
   }
 
   initClient() {
@@ -27,8 +28,14 @@ class App extends React.Component {
       clientId: this.CLIENT_ID,
       discoveryDocs: this.DISCOVERY_DOCS,
       scope: this.SCOPES
+    }).then(function () {
+      gapi.auth2.getAuthInstance().signIn();
+    }, function(error) {
+      console.log(error);
     });
+
   }
+
 
   findBreaks() {
     gapi.client.calendar.events.list({
@@ -70,7 +77,6 @@ class App extends React.Component {
         breaks.push(null)
         this.setState({breaks: breaks, areEvents: false});
       }
-
       
     });
   }
@@ -83,7 +89,7 @@ class App extends React.Component {
     let display = null
 
     if (this.state.areEvents) {
-      if (nextBreak.when.getTime() == Date.now()) {
+      if (nextBreak.when.getTime() === Date.now()) {
         //Removing current break
         let new_breaks = [...this.state.breaks]
         new_breaks.shift()
