@@ -1,8 +1,9 @@
 import React from 'react';
 
 import './App.css';
-import SurveyPage from './SurveyPage.js'
-import "https://apis.google.com/js/api.js"
+import SurveyPage from './components/SurveyPage.js'
+
+import { gapi } from 'gapi-script';
 
 class App extends React.Component {
   constructor(props) {
@@ -41,13 +42,14 @@ class App extends React.Component {
       let breaks = [];
 
       if (events.length > 0) {
-        if (!events[i].start.dateTime) {
-          //It is an all-day event
-          continue
-        }
 
-        for (i = 0; i < events.length - 1; i++) {
+        for (let i = 0; i < events.length - 1; i++) {
 
+          if (!events[i].start.dateTime) {
+            //It is an all-day event
+            continue
+          }
+          
           let thisEventEnd = new Date(events[i].end.dateTime);
           let  nextEventStart = new Date(events[i+1].start.dateTime);
 
@@ -74,33 +76,40 @@ class App extends React.Component {
   }
 
   render() {
-    let onBreak = False;
+    let onBreak = false;
     let breakMessage = null;
     let nextBreak = this.state.breaks[0]
 
-    if (nextBreak.when.getTime() == Date.now()) {
-      //Removing current break
-      let new_breaks = [...this.state.breaks]
-      new_breaks.shift()
+    let display = null
 
-      this.setState({
-        breaks: new_breaks
-      });
+    if (this.state.areEvents) {
+      if (nextBreak.when.getTime() == Date.now()) {
+        //Removing current break
+        let new_breaks = [...this.state.breaks]
+        new_breaks.shift()
 
-      onBreak = true
+        this.setState({
+          breaks: new_breaks
+        });
+
+        onBreak = true
+      }
+
+      else {
+        breakMessage = <p>
+          {`Your next break is ${nextBreak.length} minutes long at ${nextBreak.when.toLocaleTimeString()}`}
+        </p>
+      }
+
+      display = onBreak ? <SurveyPage/> : breakMessage
     }
 
     else {
-      breakMessage = <p>
-        {`Your next break is ${nextBreak.length} minutes long at ${nextBreak.when.toLocaleTimeString()}`}
-      </p>
+      display = <p>There are no events in your calendar</p>
     }
-
-    let display = onBreak ? <SurveyPage/> : breakMessage
-
     return (
       <div className="App">
-        {this.state.areEvents ?  display : <p>There are no events in your calendar</p>}
+        {display}
       </div>
     );
   }
